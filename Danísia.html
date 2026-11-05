@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Danísia</title>
+<style>
+  :root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; touch-action: none; }
+  #bar { position: absolute; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); display: flex; align-items: center; gap: 12px; font: 13px system-ui, sans-serif; color: #c98; }
+  #v { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px); left: 12px; font: 11px system-ui, sans-serif; color: #345; }
+  #ov { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 12px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 56px); background: linear-gradient(transparent 45%, rgba(0,0,0,.65)); font: 15px system-ui, sans-serif; color: #e9a; }
+  #ov h2 { margin: 0 0 8px; font: 400 28px Georgia, serif; color: #ff5c7a; }
+  .b { padding: 12px 24px; border-radius: 28px; border: 1px solid #5a2a32; background: #1a0a0d; color: #ff7a8a; font: 15px system-ui, sans-serif; cursor: pointer; }
+  #go { background: #ff4d63; color: #fff; border-color: #ff4d63; }
+  #sn { font-size: 16px; color: #ffb3c0; }
+  #nm { font-size: 13px; color: #a78; max-width: 80%; text-align: center; min-height: 16px; }
+  #cw { position: absolute; left: 8px; top: calc(env(safe-area-inset-top, 0px) + 34px); bottom: 24px; width: 52%; max-width: 380px; display: flex; align-items: flex-end; overflow: hidden; z-index: 3; pointer-events: none; -webkit-mask-image: linear-gradient(transparent, #000 18%); mask-image: linear-gradient(transparent, #000 18%); }
+  #code { margin: 0; font: 8.8px/1.5 ui-monospace, Menlo, Consolas, monospace; color: #d9c7d0; white-space: pre; opacity: .85; text-shadow: 0 0 6px #000; }
+  #code i { font-style: normal; } #code .k { color: #ff7a9c; } #code .m { color: #7ad0ff; } #code .n { color: #ffb86b; } #code .c { color: #6f8f78; }
+  #code .cur { color: #ff7a9c; animation: bl 1s steps(2) infinite; } @keyframes bl { 50% { opacity: 0; } }
+  #btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #5a2a32; background: #1a0a0d; color: #ff7a8a; font-size: 18px; flex: none; }
+  #sl { flex: 1; accent-color: #ff4d63; }
+  #tm { width: 74px; text-align: right; flex: none; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div id="cw"><pre id="code"></pre></div><script type="text/plain" id="src">
+// 1. a semente de luz cai
+let y = 2.8;
+y += (-1.55 - 2.8) * f * f;
+
+// 2. o caule brota do chão
+for (let z = -1.6; z < 0; z += .02) {
+  anel(curva(z), z, .05);
+}
+
+// 3. a rosa: phi e X por camada
+const phi = Math.PI / 2 *
+  Math.exp(-th / (8 * Math.PI));
+const X = 1 - .5 * Math.pow(
+  1.25 * Math.pow(
+    1 - ((3.6 * th) % TAU) / Math.PI,
+  2) - .25, 2);
+
+for (let u = 0; u <= 1; u += .014) {
+  const y = 1.95653 * u * u
+    * Math.pow(1.27689 * u - 1, 2)
+    * Math.sin(phi);
+  const r = X * (u * Math.sin(phi)
+    + y * Math.cos(phi));
+  const z = X * (u * Math.cos(phi)
+    - y * Math.sin(phi));
+  ponto(r * Math.sin(th),
+        z, -r * Math.cos(th));
+}
+
+// 4. as pétalas se abrem
+s = suave((t - .52 * k) / .42);
+r = botao + (flor - botao) * s;
+
+// 5. estrelas que piscam
+for (const e of estrelas) {
+  e.brilho = .15 + .85 * Math.sin(t);
+}
+</script><div id="ov"><h2 id="ttl">Danísia ❤️</h2><input id="pick" type="file" accept="audio/*" hidden><div id="nm"></div><div id="sn">🔊 Ative o som do seu aparelho</div><button id="go" class="b">Toque para começar</button></div><div id="v">Rosa de luz · v25</div><div id="bar" style="display:none"><button id="btn" aria-label="Play/Pause">⏸</button><input id="sl" type="range" min="0" max="1000" value="0"><span id="tm">0:00 / 0:30</span></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const TAU = Math.PI * 2;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const sm = (a, b, x) => { x = clamp((x - a) / (b - a)); return x * x * (3 - 2 * x); };
+const mix = (a, b, t) => a + (b - a) * t;
+const lerp3 = (st, t) => { const f = t * (st.length - 1), i = Math.min(st.length - 2, Math.floor(f)), k = f - i; return st[i].map((c, j) => mix(c, st[i + 1][j], k)); };
+const RED = [[.30, 0, .04], [.80, .03, .08], [1, .17, .21], [1, .45, .47]];
+const GRN = [[.08, .34, .07], [.27, .62, .16], [.70, .88, .42]];
+
+// Folha/sépala: lâmina lanceolada pontilhada. Pose definida pelo ângulo inicial a0 e curvatura kap.
+function leaf(out, col, off, o) {
+  const { rho0, z0, psi, len, wm, a0, kap, cup, NV = 50, NW = 9, serr = 0, ox = 0 } = o;
+  let rho = rho0, z = z0, p = off * 3;
+  const cp = Math.cos(psi), sp = Math.sin(psi);
+  for (let i = 0; i < NV; i++) {
+    const v = i / (NV - 1), a = a0 + kap * v;
+    const half = wm * (.3 + .7 * Math.sin(Math.PI * Math.pow(v, .7))) * (1 - Math.pow(v, 4)) * (1 + serr * Math.sin(v * 60));
+    for (let j = 0; j < NW; j++) {
+      const w = j / (NW - 1) * 2 - 1, wv = w * half, c = cup * wv * wv;
+      const r = rho - c * Math.cos(a), zz = z + c * Math.sin(a);
+      out[p] = r * cp - wv * sp + ox; out[p + 1] = zz; out[p + 2] = -(r * sp + wv * cp);
+      if (col) { const g = lerp3(GRN, clamp(w * w * .6 + v * .35)); col[p] = g[0]; col[p + 1] = g[1]; col[p + 2] = g[2]; }
+      p += 3;
+    }
+    rho += len / NV * Math.sin(a); z += len / NV * Math.cos(a);
+  }
+  return NV * NW;
+}
+
+function createRose(NT = 1100, NU = 70) {
+  const n = NT * NU;
+  const th = new Float32Array(n), kk = new Float32Array(n), ro = new Float32Array(n), zo = new Float32Array(n),
+        rb = new Float32Array(n), zb = new Float32Array(n), pp = new Float32Array(n * 3), pc = new Float32Array(n * 3);
+  let i = 0;
+  for (let a = 0; a < NT; a++) {
+    const t = 24 * a / (NT - 1), k = t / 24, phi = Math.PI / 2 * Math.exp(-t / (8 * Math.PI));
+    const X = 1 - .5 * Math.pow(1.25 * Math.pow(1 - ((3.6 * t) % TAU) / Math.PI, 2) - .25, 2);
+    const Rb = .44 - .2 * k, Hb = .85 + .3 * k;
+    for (let b = 0; b < NU; b++, i++) {
+      const u = b / (NU - 1), y = 1.95653 * u * u * Math.pow(1.27689 * u - 1, 2) * Math.sin(phi);
+      th[i] = t; kk[i] = k;
+      ro[i] = X * (u * Math.sin(phi) + y * Math.cos(phi)); zo[i] = X * (u * Math.cos(phi) - y * Math.sin(phi));
+      rb[i] = Rb * Math.pow(Math.sin(Math.PI * Math.pow(u, .75)), .75); zb[i] = Hb * u;
+      const c = lerp3(RED, u); pc.set(c, i * 3);
+    }
+  }
+  // verde: caule + receptáculo + 2 folhas (estáticos) + 5 sépalas (dinâmicas)
+  const NS = 14, NZ = 60, NR = 20, SEP = 5, LV = 2, per = 50 * 9;
+  const ng = (NZ + NR) * NS + (LV + SEP) * per;
+  const gp = new Float32Array(ng * 3), gc = new Float32Array(ng * 3);
+  let q = 0;
+  const sz = new Float32Array((NZ + NR) * NS);
+  const bend = z => .5 * Math.pow(clamp((-.3 - z) / 1.3), 2);
+  const ring = (z, r, cc) => { for (let s = 0; s < NS; s++) { const w = s / NS * TAU; gp.set([bend(z) + r * Math.cos(w), z, -r * Math.sin(w)], q * 3); gc.set(cc, q * 3); sz[q] = z; q++; } };
+  for (let s = 0; s < NZ; s++) ring(mix(-1.6, -.3, s / (NZ - 1)), .05, lerp3(GRN, .15 + .1 * (s % 2)));
+  for (let s = 0; s < NR; s++) { const f = s / (NR - 1); ring(mix(-.3, -.02, f), .05 + .1 * Math.pow(Math.sin(Math.PI * f * .85), .6), lerp3(GRN, .3)); }
+  const nStem = (NZ + NR) * NS, stem0 = gp.slice(0, nStem * 3);
+  const SL = [{ t0: .26, off: q, o: { rho0: .05, z0: -1.15, psi: .4, len: .95, wm: .24, a0: 1.45, kap: .9, cup: 1.2, ox: bend(-1.15) } }];
+  q += leaf(gp, gc, q, SL[0].o);
+  SL.push({ t0: .33, off: q, o: { rho0: .05, z0: -.8, psi: .4 + Math.PI * 1.1, len: .85, wm: .22, a0: 1.2, kap: 1, cup: 1.2, ox: bend(-.8) } });
+  q += leaf(gp, gc, q, SL[1].o);
+  const sepOff = q;
+  for (let j = 0; j < SEP; j++) leaf(gp, gc, sepOff + j * per, { rho0: .11, z0: -.03, psi: j / SEP * TAU + .3, len: .95, wm: .2, a0: 1.3, kap: -1.8, cup: 5 });
+
+  const FAR = 1e4;
+  function update(T) {
+    const tb = clamp((T - .44) / .56), sc = sm(.40, .50, T), g = sm(.14, .46, T), Zt = mix(-1.6, -.02, g), off = Zt + .02;
+    for (let i = 0; i < nStem; i++) { const j = 3 * i; if (sz[i] <= Zt) { gp[j] = stem0[j]; gp[j + 1] = stem0[j + 1]; gp[j + 2] = stem0[j + 2]; } else gp[j + 1] = FAR; }
+    for (const L of SL) {   // folhas do caule se desenrolam quando o caule chega nelas
+      const gl = Math.max(sm(0, 1, (T - L.t0) / .1), .001);
+      leaf(gp, null, L.off, { ...L.o, len: L.o.len * gl, wm: L.o.wm * gl, a0: mix(.3, L.o.a0, gl), kap: mix(.2, L.o.kap, gl) });
+      if (gl < .02) for (let k = 0; k < per; k++) gp[(L.off + k) * 3 + 1] = FAR;
+    }
+    const p = sm(.15, .55, tb);
+    for (let j = 0; j < SEP; j++) leaf(gp, null, sepOff + j * per, { rho0: .11, z0: -.03, psi: j / SEP * TAU + .3 + .5 * p, len: .95, wm: .2, a0: mix(1.3, 2.25, p), kap: mix(-1.8, .5, p), cup: mix(5, 1.5, p) });
+    for (let q2 = sepOff * 3; q2 < (sepOff + SEP * per) * 3; q2 += 3) {
+      if (sc < .01) gp[q2 + 1] = FAR; else { gp[q2] *= sc; gp[q2 + 1] = gp[q2 + 1] * sc + off; gp[q2 + 2] *= sc; }
+    }
+    let a0 = -1, s = 0, sn = 0, cs = 1;
+    for (let i = 0; i < n; i++) {
+      if (sc < .01) { pp[3 * i + 1] = FAR; continue; }
+      const k = kk[i];
+      if (k !== a0) { a0 = k; s = sm(0, 1, (tb - .04 - .52 * k) / .42); const ang = th[i] - .9 * (1 - s); sn = Math.sin(ang); cs = Math.cos(ang); }
+      const r = rb[i] + (ro[i] - rb[i]) * s, z = zb[i] + (zo[i] - zb[i]) * s;
+      pp[3 * i] = r * sn * sc; pp[3 * i + 1] = z * sc + off; pp[3 * i + 2] = -r * cs * sc;
+    }
+  }
+  return { n, ng, pp, pc, gp, gc, update };
+}
+
+
+// Luz: semente que cai, rastro, ondas no chão, chão pontilhado e vaga-lumes
+function createLight() {
+  let sd = 7; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647, gs = () => rnd() + rnd() + rnd() - 1.5;
+  const BX = .5, GZ = -1.6, NO = 260, NT2 = 70, NRG = 4, NPR = 100, NF = 90, NC = 110, FAR = 1e4;
+  const ground = []; for (let r = .2; r <= 2.3; r += .15) { const m = Math.round(r * 300); for (let k = 0; k < m; k++) { const a = k / m * TAU + rnd() * .3; ground.push([BX + r * Math.cos(a), r * Math.sin(a), r]); } }
+  const NG = ground.length, n = NO + NT2 + NRG * NPR + NG + NF * 19 + NC * 19;
+  const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+  const ob = Array.from({ length: NO }, () => [gs() * .042, gs() * .042, gs() * .042]);
+  const tj = Array.from({ length: NT2 }, () => [(rnd() - .5) * .03, (rnd() - .5) * .03]);
+  const fl = Array.from({ length: NF }, () => ({ ph: rnd(), an: rnd() * TAU, rd: .3 + rnd() * 1.3, sp: .5 + rnd() * .8, s: .06 + rnd() * .06, tw: rnd() * TAU, d: rnd() * .25 }));
+  const PAL = [[1, .35, .55], [.4, .7, 1], [.7, .5, 1], [1, .8, .3], [.4, 1, .8], [1, .55, .25]];
+  const cs = Array.from({ length: NC }, () => { const an = rnd() * TAU, rd = 1.3 + rnd() * 2.3; return { c: PAL[Math.floor(rnd() * PAL.length)], x: .15 + rd * Math.cos(an), z: rd * Math.sin(an), y: -2.2 + rnd() * 5.4, s: .04 + rnd() * .06, tw: rnd() * TAU, sp: .5 + rnd() * 1.2, d: rnd() * .25 }; });
+  let i = 0;
+  for (let k = 0; k < NO; k++) col.set([1, .92, .65], 3 * i++);
+  for (let k = 0; k < NT2; k++) col.set([1, .78, .35].map(v => v * Math.pow(1 - k / NT2, 2)), 3 * i++);
+  i += NRG * NPR;
+  for (const gp of ground) { col.set([.1, .4, 1].map(v => v * .8 * Math.pow(1 - gp[2] / 2.6, .9)), 3 * i); pos.set([gp[0], GZ + rnd() * .05, gp[1]], 3 * i++); }
+  for (const C of cs) { col.set(C.c, 3 * i++); for (let b = 0; b < 18; b++) col.set(C.c.map(v => v * (1.1 - (b % 3 + 1) * .3)), 3 * i++); }
+  for (let k = 0; k < NF; k++) { col.set([1, 1, 1], 3 * i++); for (let b = 0; b < 18; b++) col.set([1, 1, 1].map(v => v * (1.1 - (b % 3 + 1) * .3)), 3 * i++); }
+  function update(T) {
+    const f = clamp(T / .10), orbY = f < 1 ? mix(2.8, GZ + .05, f * f) : GZ + .05 - .07 * sm(.10, .16, T);
+    const size = 1 - sm(.10, .17, T), orbOn = T < .17;
+    let q = 0;
+    for (let k = 0; k < NO; k++, q++) pos.set(orbOn ? [BX + ob[k][0] * (.3 + size), orbY + ob[k][1] * (.3 + size), ob[k][2] * (.3 + size)] : [0, FAR, 0], 3 * q);
+    for (let k = 0; k < NT2; k++, q++) pos.set(f < 1 ? [BX + tj[k][0] * k / 8, orbY + (k + 1) * .03 * (1 + f * 2), tj[k][1] * k / 8] : [0, FAR, 0], 3 * q);
+    for (let r = 0; r < NRG; r++) {
+      const pr = clamp((T - .10 - r * .03) / .17), on = pr > 0 && pr < 1, R = pr * 1.5, b = Math.pow(1 - pr, 1.5);
+      for (let k = 0; k < NPR; k++, q++) { const a = k / NPR * TAU; pos.set(on ? [BX + R * Math.cos(a), GZ + .01, R * Math.sin(a)] : [0, FAR, 0], 3 * q); col.set([b, .85 * b, .5 * b], 3 * q); }
+    }
+    q += NG;
+    for (const C of cs) { const ap = sm(0, 1, (T + EXTRA - .46 - C.d) / .07), on = ap > .004, s2 = ap * C.s * (.15 + .85 * (.5 + .5 * Math.sin((T + EXTRA) * 120 * C.sp + C.tw))) / 3; pos.set(on ? [C.x, C.y, C.z] : [0, FAR, 0], 3 * q++); for (const d of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) for (let j = 1; j <= 3; j++) pos.set(on ? [C.x + d[0] * j * s2, C.y + d[1] * j * s2, C.z + d[2] * j * s2] : [0, FAR, 0], 3 * q++); for (let b = 0; b < 19; b++) col.set(C.c.map(v => v * ap * (b ? 1.1 - ((b - 1) % 3 + 1) * .3 : 1)), 3 * (q - 19 + b)); }
+    for (let k = 0; k < NF; k++) {
+      const F = fl[k], y = GZ + ((F.ph + (T + EXTRA) * F.sp * .6) % 1) * 3.6, a = F.an + (T + EXTRA) * 3 * F.sp;
+      const ap = sm(0, 1, (T + EXTRA - .46 - F.d) / .07), on = ap > .004, cx = .15 + F.rd * Math.cos(a), cz = F.rd * Math.sin(a), s2 = ap * F.s * (.55 + .45 * Math.sin((T + EXTRA) * 120 * F.sp + F.tw)) / 3; pos.set(on ? [cx, y, cz] : [0, FAR, 0], 3 * q++); for (const d of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) for (let j = 1; j <= 3; j++) pos.set(on ? [cx + d[0] * j * s2, y + d[1] * j * s2, cz + d[2] * j * s2] : [0, FAR, 0], 3 * q++); for (let b = 0; b < 19; b++) col.set([1, 1, 1].map(v => v * ap * (b ? 1.1 - ((b - 1) % 3 + 1) * .3 : 1)), 3 * (q - 19 + b));
+    }
+  }
+  return { n, pos, col, update };
+}
+
+
+let DUR = 90; const FOV = 35; let EXTRA = 0;
+const rose = createRose(1100, 70);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+const pr = Math.min(devicePixelRatio, 2);
+renderer.setPixelRatio(pr); document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(FOV, 1, .1, 50);
+const group = new THREE.Group(); scene.add(group);
+function dot() {
+  const c = document.createElement("canvas"); c.width = c.height = 64;
+  const x = c.getContext("2d"), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(.25, "rgba(255,255,255,.6)"); g.addColorStop(1, "rgba(255,255,255,0)");
+  x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c);
+}
+const tex = dot(), halos = [];
+function pts(pos, col, size, glow) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  // camada nítida + camada de halo maior e suave (o brilho)
+  for (const [k, op] of [[2.2, .55], [8, .05]]) {
+    const m = new THREE.PointsMaterial({ size: size * pr * k, sizeAttenuation: false, vertexColors: true, map: tex, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false });
+    if (k > 3) halos.push(m);
+    const p = new THREE.Points(g, m); p.frustumCulled = false; group.add(p);
+  }
+  return g;
+}
+const light = createLight(), gL = pts(light.pos, light.col, 1.4, true);
+const gP = pts(rose.pp, rose.pc, 1.3), gG = pts(rose.gp, rose.gc, 1.3);
+
+let T = 0, playing = false, last = performance.now(), yaw = 0, pitch = 0, zoom = 1;
+const au = new Audio(); au.loop = false; au.preload = "auto";
+const pick = document.getElementById("pick"), go = document.getElementById("go"), ov = document.getElementById("ov"), nm = document.getElementById("nm");
+const DBN = "rosa", openDB = () => new Promise(res => { try { const r = indexedDB.open(DBN, 1); r.onupgradeneeded = () => r.result.createObjectStore("s"); r.onsuccess = () => res(r.result); r.onerror = () => res(null); } catch (e) { res(null); } });
+async function saveSong(b, n) { try { const db = await openDB(); if (db) db.transaction("s", "readwrite").objectStore("s").put({ b, n }, "song"); } catch (e) {} }
+async function loadSong() { try { const db = await openDB(); if (!db) return null; return await new Promise(res => { const q = db.transaction("s").objectStore("s").get("song"); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); } catch (e) { return null; } }
+function setSong(b, n) { au.src = URL.createObjectURL(b); nm.textContent = "♪ " + n; }
+
+pick.onchange = () => { const f = pick.files[0]; if (!f) return; setSong(f, f.name); saveSong(f, f.name); };
+loadSong().then(r => { if (r) setSong(r.b, r.n); else fetch("musica.mp3", { method: "HEAD" }).then(x => { if (!x.ok) throw 0; au.src = "musica.mp3"; nm.textContent = "♪ Golden Hour"; }).catch(() => { nm.textContent = "Coloque a música para tocar no seu app e toque para começar"; }); });
+ov.onclick = e => { if (e.target.id === "ttl") { pick.click(); return; } if (e.target.id === "pick") return; if (au.src) au.play().catch(() => {}); ov.style.display = "none"; playing = true; };
+const SRC = document.getElementById("src").textContent.trim(), codeEl = document.getElementById("code");
+let shown = -1;
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const hl = s => s.split("\n").map(l => { const i = l.indexOf("//"), c = i >= 0 ? l.slice(i) : "", t = i >= 0 ? l.slice(0, i) : l; return esc(t).replace(/(\b(?:const|let|for|function|return)\b)|(\bMath\b)|(\b\d*\.?\d+\b)/g, (m, a, b) => '<i class="' + (a ? "k" : b ? "m" : "n") + '">' + m + "</i>") + (c ? '<i class="c">' + esc(c) + "</i>" : ""); }).join("\n");
+function typeCode() { const n = Math.floor(SRC.length * Math.min(1, T / .9)); if (n === shown) return; shown = n; codeEl.innerHTML = hl(SRC.slice(0, n)) + '<i class="cur">▌</i>'; }
+const btn = document.getElementById("btn"), sl = document.getElementById("sl"), tm = document.getElementById("tm");
+const fmt = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+btn.onclick = () => { if (T >= 1) T = 0; playing = !playing; };
+sl.oninput = () => { T = sl.value / 1000; playing = false; };
+
+const ptrs = new Map(); let lp = 0; const el = renderer.domElement;
+el.addEventListener("pointerdown", e => { el.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, e); });
+el.addEventListener("pointerup", e => ptrs.delete(e.pointerId));
+el.addEventListener("pointercancel", e => ptrs.delete(e.pointerId));
+el.addEventListener("pointermove", e => {
+  const pv = ptrs.get(e.pointerId); if (!pv) return;
+  if (ptrs.size === 1) { yaw += (e.clientX - pv.clientX) * .008; pitch = clamp(pitch + (e.clientY - pv.clientY) * .005, -.5, .6); }
+  ptrs.set(e.pointerId, e);
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); if (lp) zoom = clamp(zoom * lp / d, .5, 1.8); lp = d; } else lp = 0;
+});
+el.addEventListener("wheel", e => { e.preventDefault(); zoom = clamp(zoom * (1 + e.deltaY * .001), .5, 1.8); }, { passive: false });
+function resize() { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+addEventListener("resize", resize); resize();
+
+(function loop(now) {
+  if (playing) { T = au.src && au.duration && !au.paused ? Math.min(1, au.currentTime / DUR) : Math.min(1, T + (now - last) / 1000 / DUR); } if (T >= 1) EXTRA += (now - last) / 1000 / DUR;
+  last = now;
+  const gl = .013 + .014 * sm(.2, 1, T) + .005 * Math.sin(now / 450);   // brilho pulsante, cresce com a abertura
+  halos.forEach(m => m.opacity = gl);
+  typeCode(); rose.update(T); light.update(T); gL.attributes.position.needsUpdate = true; gL.attributes.color.needsUpdate = true; gP.attributes.position.needsUpdate = true; gG.attributes.position.needsUpdate = true;
+  // câmera: começa de perfil no botão e sobe/afasta para mostrar a flor aberta
+  const ca = sm(0, .45, T), cb = sm(.45, 1, T), H = Math.max(mix(mix(5.6, 3.9, ca), 3.4, cb), 2.6 / camera.aspect) * zoom;
+  group.position.y = -mix(mix(.3, -.4, ca), -.1, cb);
+  group.rotation.set(mix(mix(.35, .3, ca), .8, cb) + pitch, 1.1 * T + yaw + .12 * (EXTRA * DUR + 2 * (Math.exp(-EXTRA * DUR / 2) - 1)), 0);
+  camera.position.set(0, 0, H / (2 * Math.tan(FOV * Math.PI / 360)));
+  renderer.render(scene, camera);
+  sl.value = T * 1000; tm.textContent = fmt(T * DUR) + " / " + fmt(DUR); btn.textContent = playing ? "⏸" : (T >= 1 ? "↺" : "▶");
+  requestAnimationFrame(loop);
+})(performance.now());
+</script>
+</body>
+</html>
